@@ -1,3 +1,6 @@
+from multiprocessing import Process
+from multiprocessing import Queue
+
 import socket
 import enum
 import time
@@ -46,6 +49,24 @@ class Snake():
         self.body.append([0, 0])
 
 
+class Server():
+    def __init__(self):
+        self.server_return = Queue()
+        self.server_process = Process(target=self.setup_server,
+                                      name="snake_server",
+                                      args=(self.server_return,))
+        self.running = False
+
+    
+
+    def run_server(self):
+        """Starts the server process and returns the address to the socket"""
+        self.server_process.start()
+        self.running = True
+        return self.server_return.get()
+
+        
+
 snakes = []
 
 def eat_food(snake, food_value):
@@ -61,23 +82,6 @@ def set_direction(player, direction):
     snakes[player].direction = direction
 
 
-def setup_server():
-    """Creates a new UDP server, binding to an ip and port"""
-    
-    print(f"[{__name__}] Initialising server...")
-    hostname = socket.gethostname()
-    ip = socket.gethostbyname(hostname)
-
-    comms = socket.socket(type=SOCK_DGRAM)
-    comms.bind((ip, 0))
-    port = comms.getsockname()[1]
-    print(f"[{__name__}] Successfully initialised server on {ip}:{port}")
-
-    host_comms.put(comms.getsockname())
-
-    # TEMPORARY
-    close_server(comms)
-
 
 def create_lobby():
     print(f"[{__name__}] Creating lobby...")
@@ -85,8 +89,38 @@ def create_lobby():
 
 def close_server(comms):
     comms.close()
-    print(f"[{__name__}] Server successfully closed")
+    
+def start_server():
+    """Creates a new UDP server, binding to an ip and port"""
+    print(f"[{__name__}] Initialising server...")
+    hostname = socket.gethostname()
+    ip = socket.gethostbyname(hostname)
 
+    comms = socket.socket(type=socket.SOCK_DGRAM)
+    comms.bind((ip, 0))
+    address = comms.getsockname()
+    return address
+    print(f"[{__name__}] Successfully initialised server on {ip}:{address[1]}")
+
+
+def wait(server_in, server_out):
+    print(f"[{__name__}] Creating server process...")
+    running = True
+    while running:
+        print(f"[{__name__}] Awaiting input...")
+        result = server_in.get()
+
+        if result == "STOP":
+            running = False
+
+        if result == "START":
+            address = start_server()
+            server_out.put(address)
+
+    # CLOSE PROCESS
+    print(f"[{__name__}] Closing process...")
+    
+    
 
 def start():
     pass

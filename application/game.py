@@ -1,4 +1,3 @@
-from multiprocessing import Process
 import socket
 from socket import SOCK_DGRAM
 
@@ -14,14 +13,16 @@ play_menu = [
 def on_play():
     pass
 
-def on_host():
-    """Spawns a server to host a lobby"""
-    from __main__ import create_server
-    address = create_server()
+def on_host(server_in, server_out):
+    """Spawns a server to host a lobby
+    Creates a subprocess to run the server."""
+    print("Starting server")
+    server_in.put("START")
+    print("Started")
+    address = server_out.get()
 
-    # Connect to created server.
-    server = socket.socket(type=SOCK_DGRAM).connect(address)
-    print(f"[{__name__}] Host successfully connected to server")
+    sock = socket.socket(type=socket.SOCK_DGRAM).connect(address)
+    print(address)
     
         
 def load_options():

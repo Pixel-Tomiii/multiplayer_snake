@@ -1,28 +1,20 @@
 
 
-def create_server():
-    """Creates a subprocess and returns the address to the server"""
-    if __name__ == "__main__":
-        print(f"[{__name__}] Creating server...")
-        server_comms = Queue()
-        print("queue created")
-        server = Process(target=setup_server,
-                         name="snake_server",
-                         args=(server_comms,))
-        print("process created")
-        server.start()
-        print("process started")
-        address = server_comms.get()
-        print("address found")
-    return address
-
-
 if __name__ == "__main__":
     from multiprocessing import Process
     from multiprocessing import Queue
-    from server.server import setup_server
+    from server.server import wait
     from application.game import on_host
 
-    on_host()
+    server_in = Queue()
+    server_out = Queue()
+    server_proc = Process(target=wait,
+                          name="snake_server",
+                          args=(server_in, server_out))
+    server_proc.start()
+    print("Started process")
+
+    
+    on_host(server_in, server_out)
 
 
